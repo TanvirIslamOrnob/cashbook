@@ -1,0 +1,6 @@
+{
+  "appId": "com.novacash.app",
+  "appName": "NovaCash",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
