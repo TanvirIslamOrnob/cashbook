@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Nova Cash — Cashbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050710;
+    --bg2:#0a0e1c;
+    --glass:rgba(255,255,255,0.045);
+    --glass-strong:rgba(255,255,255,0.07);
+    --border:rgba(255,255,255,0.09);
+    --border-soft:rgba(255,255,255,0.06);
+    --text:#eef1ff;
+    --text-dim:#8891b0;
+    --cyan:#37f2ff;
+    --cyan-deep:#0fb8d4;
+    --violet:#8b6bff;
+    --green:#3bffa0;
+    --green-deep:#12c97a;
+    --pink:#ff5c9d;
+    --pink-deep:#e8306f;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+    position:relative;
+  }
+  body::before, body::after{
+    content:"";
+    position:fixed;
+    width:520px; height:520px;
+    border-radius:50%;
+    filter:blur(110px);
+    z-index:0;
+    opacity:0.35;
+    animation:drift 14s ease-in-out infinite alternate;
+  }
+  body::before{
+    background:radial-gradient(circle, var(--violet), transparent 70%);
+    top:-180px; left:-160px;
+  }
+  body::after{
+    background:radial-gradient(circle, var(--cyan), transparent 70%);
+    bottom:-200px; right:-160px;
+    animation-delay:2s;
+  }
+  @keyframes drift{
+    0%{ transform:translate(0,0) scale(1); }
+    100%{ transform:translate(30px,-20px) scale(1.08); }
+  }
+
+  .stage{ width:100%; max-width:420px; position:relative; z-index:1; }
+
+  .passbook{
+    background:linear-gradient(180deg, rgba(20,24,42,0.85), rgba(9,12,22,0.9));
+    border:1px solid var(--border);
+    border-radius:26px;
+    position:relative;
+    overflow:hidden;
+    min-height:660px;
+    display:flex;
+    flex-direction:column;
+    backdrop-filter:blur(20px);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.02) inset,
+      0 30px 80px -20px rgba(0,0,0,0.7),
+      0 0 60px -10px rgba(139,107,255,0.25);
+  }
+  .passbook::before{
+    content:"";
+    position:absolute;
+    top:0; left:10%; right:10%; height:1px;
+    background:linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent);
+    opacity:0.7;
+    filter:blur(0.3px);
+  }
+  .passbook::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size:26px 26px;
+    pointer-events:none;
+    opacity:0.4;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%, black, transparent 70%);
+            mask-image:radial-gradient(ellipse at 50% 0%, black, transparent 70%);
+  }
+  .sheet{
+    position:relative;
+    z-index:2;
+    padding:32px 28px 26px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+  .brandrow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:26px;
+  }
+  .wordmark{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:0.3px;
+    color:var(--text);
+    text-shadow:0 0 18px rgba(55,242,255,0.5);
+  }
+  .wordmark span{
+    background:linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .stamp-badge{
+    width:38px; height:38px;
+    border-radius:50%;
+    border:1.5px solid var(--border);
+    background:var(--glass);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:9px; font-weight:600;
+    letter-spacing:0.5px;
+    color:var(--cyan);
+    box-shadow:0 0 16px rgba(55,242,255,0.35);
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--cyan);
+    opacity:0.85;
+    margin-bottom:8px;
+    text-shadow:0 0 12px rgba(55,242,255,0.6);
+  }
+  h1.title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:25px;
+    color:var(--text);
+    margin-bottom:24px;
+    letter-spacing:0.2px;
+  }
+
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:1px;
+    color:var(--text-dim);
+    margin-bottom:7px;
+    text-transform:uppercase;
+  }
+  .field input, .field select{
+    width:100%;
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    background:var(--glass);
+    font-family:'Inter', sans-serif;
+    font-size:15.5px;
+    padding:13px 14px;
+    color:var(--text);
+    outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .field input::placeholder{ color:#565f80; }
+  .field input:focus, .field select:focus{
+    border-color:var(--cyan);
+    background:rgba(55,242,255,0.05);
+    box-shadow:0 0 0 3px rgba(55,242,255,0.12), 0 0 20px rgba(55,242,255,0.15);
+  }
+  .field select{ appearance:none; -webkit-appearance:none; background-image:linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%); background-position: calc(100% - 18px) center, calc(100% - 13px) center; background-size:5px 5px, 5px 5px; background-repeat:no-repeat;}
+  .field .hint{ font-size:11.5px; color:var(--text-dim); margin-top:6px; }
+
+  .btn{
+    width:100%;
+    border:none;
+    border-radius:13px;
+    padding:14px 18px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .2s ease, opacity .12s ease, filter .2s ease;
+    position:relative;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn-primary{
+    background:linear-gradient(120deg, var(--cyan), var(--violet));
+    color:#050710;
+    box-shadow:0 8px 30px -6px rgba(55,242,255,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  }
+  .btn-ghost{
+    background:var(--glass);
+    color:var(--text);
+    border:1px solid var(--border);
+  }
+  .btn-ghost:hover{ border-color:var(--cyan); box-shadow:0 0 16px rgba(55,242,255,0.2); }
+  .btn-brass{
+    background:linear-gradient(120deg, var(--green), var(--green-deep));
+    color:#04160e;
+    box-shadow:0 8px 30px -6px rgba(59,255,160,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  }
+  .btn-rust{
+    background:linear-gradient(120deg, var(--pink), var(--pink-deep));
+    color:#1c0210;
+    box-shadow:0 8px 30px -6px rgba(255,92,157,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  }
+  .btn[disabled]{ opacity:0.5; cursor:not-allowed; }
+
+  .linkrow{
+    text-align:center;
+    margin-top:18px;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+  .linkrow a{
+    color:var(--cyan);
+    font-weight:600;
+    text-decoration:none;
+    cursor:pointer;
+    text-shadow:0 0 10px rgba(55,242,255,0.4);
+  }
+  .linkrow a:hover{ text-decoration:underline; }
+
+  .error-msg{
+    background:rgba(255,92,157,0.08);
+    border:1px solid rgba(255,92,157,0.35);
+    color:#ff9dc0;
+    font-size:12.5px;
+    font-weight:600;
+    padding:11px 13px;
+    border-radius:10px;
+    margin-bottom:14px;
+    display:none;
+    box-shadow:0 0 20px rgba(255,92,157,0.12);
+  }
+  .success-msg{
+    background:rgba(59,255,160,0.08);
+    border:1px solid rgba(59,255,160,0.35);
+    color:#9dffcf;
+    font-size:12.5px;
+    font-weight:600;
+    padding:11px 13px;
+    border-radius:10px;
+    margin-bottom:14px;
+    display:none;
+    box-shadow:0 0 20px rgba(59,255,160,0.12);
+  }
+
+  .spacer{ flex:1; }
+
+  .screen{ display:none; flex-direction:column; height:100%; animation:fadeIn .35s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .dash-header{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:20px;
+  }
+  .dash-header .who{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px;}
+  .dash-header .name{ font-family:'Space Grotesk', sans-serif; font-size:19px; font-weight:600; color:var(--text); margin-top:3px;}
+  .logout-btn{
+    background:var(--glass); border:1px solid var(--border); cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; color:var(--pink); font-weight:600;
+    padding:7px 12px;
+    border-radius:20px;
+    letter-spacing:0.5px;
+  }
+  .logout-btn:hover{ box-shadow:0 0 14px rgba(255,92,157,0.25); }
+
+  .balance-block{
+    background:linear-gradient(155deg, rgba(139,107,255,0.18), rgba(55,242,255,0.08));
+    border:1px solid rgba(139,107,255,0.35);
+    border-radius:18px;
+    padding:24px 22px 20px;
+    color:var(--text);
+    position:relative;
+    overflow:hidden;
+    margin-bottom:16px;
+    box-shadow:0 0 40px -8px rgba(139,107,255,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .balance-block::after{
+    content:"";
+    position:absolute;
+    right:-60px; top:-60px;
+    width:180px; height:180px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(55,242,255,0.35), transparent 70%);
+    filter:blur(10px);
+    animation:pulseGlow 3.4s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{ opacity:0.5; transform:scale(1); }
+    50%{ opacity:0.9; transform:scale(1.12); }
+  }
+  .balance-block .lbl{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--text-dim); margin-bottom:8px; position:relative; z-index:1;
+  }
+  .balance-block .amt{
+    font-family:'JetBrains Mono', monospace;
+    font-size:36px; font-weight:700;
+    position:relative; z-index:1;
+    color:#fff;
+    text-shadow:0 0 24px rgba(55,242,255,0.6), 0 0 50px rgba(139,107,255,0.35);
+    letter-spacing:0.5px;
+  }
+  .balance-block .amt .cur{ font-size:19px; opacity:0.75; margin-right:3px;}
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .stat-card{
+    background:var(--glass);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:14px 15px;
+    transition:box-shadow .2s ease, border-color .2s ease;
+  }
+  .stat-card.deposit{ border-color:rgba(59,255,160,0.25); }
+  .stat-card.deposit:hover{ box-shadow:0 0 18px rgba(59,255,160,0.18); }
+  .stat-card.cashout{ border-color:rgba(255,92,157,0.25); }
+  .stat-card.cashout:hover{ box-shadow:0 0 18px rgba(255,92,157,0.18); }
+  .stat-card .lbl{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px; letter-spacing:1.2px; text-transform:uppercase;
+    margin-bottom:7px; display:flex; align-items:center; gap:6px;
+  }
+  .stat-card.deposit .lbl{ color:var(--green); }
+  .stat-card.cashout .lbl{ color:var(--pink); }
+  .stat-card .amt{
+    font-family:'JetBrains Mono', monospace;
+    font-size:18px; font-weight:700; color:var(--text);
+  }
+
+  .action-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:22px;
+  }
+
+  .ledger-heading{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:12px;
+  }
+  .ledger-heading .t{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15.5px; color:var(--text);
+  }
+  .ledger-heading .c{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--text-dim);
+  }
+
+  .tx-list{
+    flex:1;
+    overflow-y:auto;
+    padding-right:2px;
+    margin-right:-2px;
+  }
+  .tx-list::-webkit-scrollbar{ width:4px; }
+  .tx-list::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+
+  .tx-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 10px;
+    margin-bottom:8px;
+    border-radius:12px;
+    background:var(--glass);
+    border:1px solid var(--border-soft);
+    animation:rowIn .35s ease;
+  }
+  @keyframes rowIn{ from{opacity:0; transform:translateX(-6px);} to{opacity:1; transform:translateX(0);} }
+  .tx-stamp{
+    width:34px; height:34px;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:15px;
+    flex-shrink:0;
+  }
+  .tx-stamp.deposit{ color:var(--green); background:rgba(59,255,160,0.12); box-shadow:0 0 14px rgba(59,255,160,0.25); }
+  .tx-stamp.cashout{ color:var(--pink); background:rgba(255,92,157,0.12); box-shadow:0 0 14px rgba(255,92,157,0.25); }
+  .tx-info{ flex:1; min-width:0; }
+  .tx-info .note{ font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tx-info .date{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--text-dim); margin-top:3px;}
+  .tx-amt{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:14.5px; }
+  .tx-amt.deposit{ color:var(--green); text-shadow:0 0 10px rgba(59,255,160,0.4); }
+  .tx-amt.cashout{ color:var(--pink); text-shadow:0 0 10px rgba(255,92,157,0.4); }
+
+  .empty-state{
+    text-align:center;
+    padding:44px 10px;
+    color:var(--text-dim);
+  }
+  .empty-state .glyph{
+    font-family:'Space Grotesk', sans-serif; font-size:32px; margin-bottom:8px;
+    color:var(--cyan); text-shadow:0 0 20px rgba(55,242,255,0.5);
+  }
+  .empty-state .msg{ font-size:13px; }
+
+  .modal-backdrop{
+    position:fixed; inset:0;
+    background:rgba(3,5,12,0.7);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+    backdrop-filter:blur(6px);
+  }
+  .modal-backdrop.active{ display:flex; }
+  .modal-sheet{
+    background:linear-gradient(180deg, rgba(20,24,42,0.98), rgba(8,10,20,0.98));
+    border:1px solid var(--border);
+    border-bottom:none;
+    width:100%;
+    max-width:420px;
+    border-radius:22px 22px 0 0;
+    padding:26px 26px 30px;
+    animation:slideUp .28s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 -20px 60px rgba(0,0,0,0.6), 0 0 40px -10px rgba(139,107,255,0.3);
+  }
+  @keyframes slideUp{ from{transform:translateY(100%);} to{transform:translateY(0);} }
+  .modal-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:20px;
+    margin-bottom:4px;
+  }
+  .modal-title.deposit{ color:var(--green); text-shadow:0 0 16px rgba(59,255,160,0.5); }
+  .modal-title.cashout{ color:var(--pink); text-shadow:0 0 16px rgba(255,92,157,0.5); }
+  .modal-sub{ font-size:12.5px; color:var(--text-dim); margin-bottom:20px; }
+  .modal-close{
+    position:absolute; top:18px; right:22px;
+    background:var(--glass); border:1px solid var(--border-soft); width:28px; height:28px; border-radius:50%;
+    font-size:14px; color:var(--text); opacity:0.8; cursor:pointer;
+  }
+
+  .stamp-fx{
+    position:fixed;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%) scale(0.6);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:30px;
+    padding:16px 30px;
+    border-radius:16px;
+    z-index:100;
+    opacity:0;
+    pointer-events:none;
+    letter-spacing:0.5px;
+  }
+  .stamp-fx.show{
+    animation:stampFx .8s cubic-bezier(.2,.9,.3,1.2) forwards;
+  }
+  .stamp-fx.deposit{
+    color:#04160e;
+    background:linear-gradient(120deg, var(--green), var(--green-deep));
+    box-shadow:0 0 60px rgba(59,255,160,0.7), 0 0 120px rgba(59,255,160,0.4);
+  }
+  .stamp-fx.cashout{
+    color:#1c0210;
+    background:linear-gradient(120deg, var(--pink), var(--pink-deep));
+    box-shadow:0 0 60px rgba(255,92,157,0.7), 0 0 120px rgba(255,92,157,0.4);
+  }
+  @keyframes stampFx{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(0.5); }
+    35%{ opacity:1; transform:translate(-50%,-50%) scale(1.06); }
+    55%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(0.94); }
+  }
+
+  @media (max-width:400px){
+    .sheet{ padding:26px 20px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="passbook">
+
+    <div class="screen active" id="screen-login">
+      <div class="sheet">
+        <div class="brandrow">
+          <div class="wordmark">Nova<span>Cash</span></div>
+          <div class="stamp-badge">$</div>
+        </div>
+        <div class="eyebrow">Welcome back</div>
+        <h1 class="title">Sign in to your cashbook</h1>
+
+        <div class="error-msg" id="login-error"></div>
+
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="login-username" autocomplete="username" placeholder="e.g. shuvo94">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+
+        <div class="spacer"></div>
+
+        <button class="btn btn-primary" id="btn-login">Sign in</button>
+        <div class="linkrow">
+          <a onclick="go('forgot')">Forgot password?</a>
+        </div>
+        <div class="linkrow">
+          New here? <a onclick="go('register')">Create an account</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-register">
+      <div class="sheet">
+        <div class="brandrow">
+          <div class="wordmark">Nova<span>Cash</span></div>
+        </div>
+        <div class="eyebrow">Open a ledger</div>
+        <h1 class="title">Create your account</h1>
+
+        <div class="error-msg" id="register-error"></div>
+
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="reg-username" placeholder="Choose a username">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Choose a password">
+          <div class="hint">Minimum 4 characters. Stored securely on this device.</div>
+        </div>
+        <div class="field">
+          <label>Security question</label>
+          <select id="reg-question">
+            <option value="pet">What was your first pet's name?</option>
+            <option value="city">What city were you born in?</option>
+            <option value="school">What was your first school?</option>
+            <option value="mother">What is your mother's first name?</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Answer</label>
+          <input type="text" id="reg-answer" placeholder="Your answer (used to recover password)">
+        </div>
+
+        <div class="spacer"></div>
+
+        <button class="btn btn-brass" id="btn-register">Create account</button>
+        <div class="linkrow">
+          Already have an account? <a onclick="go('login')">Sign in</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-forgot">
+      <div class="sheet">
+        <div class="brandrow">
+          <div class="wordmark">Nova<span>Cash</span></div>
+        </div>
+        <div class="eyebrow">Account recovery</div>
+        <h1 class="title">Reset your password</h1>
+
+        <div class="error-msg" id="forgot-error"></div>
+        <div class="success-msg" id="forgot-success"></div>
+
+        <div id="forgot-step1">
+          <div class="field">
+            <label>Username</label>
+            <input type="text" id="forgot-username" placeholder="Enter your username">
+          </div>
+          <button class="btn btn-ghost" id="btn-find-account">Find account</button>
+        </div>
+
+        <div id="forgot-step2" style="display:none;">
+          <div class="field">
+            <label id="forgot-question-label">Security question</label>
+            <input type="text" id="forgot-answer" placeholder="Your answer">
+          </div>
+          <div class="field">
+            <label>New password</label>
+            <input type="password" id="forgot-newpass" placeholder="Enter a new password">
+          </div>
+          <button class="btn btn-brass" id="btn-reset-password">Reset password</button>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="linkrow">
+          <a onclick="go('login')">Back to sign in</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-dash">
+      <div class="sheet">
+        <div class="dash-header">
+          <div>
+            <div class="who">Signed in as</div>
+            <div class="name" id="dash-username">—</div>
+          </div>
+          <button class="logout-btn" onclick="logout()">Log out</button>
+        </div>
+
+        <div class="balance-block">
+          <div class="lbl">Net balance</div>
+          <div class="amt"><span class="cur">৳</span><span id="dash-balance">0.00</span></div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-card deposit">
+            <div class="lbl">↓ Total deposit</div>
+            <div class="amt" id="dash-total-deposit">0.00</div>
+          </div>
+          <div class="stat-card cashout">
+            <div class="lbl">↑ Total cashout</div>
+            <div class="amt" id="dash-total-cashout">0.00</div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-brass" onclick="openModal('deposit')">+ Deposit</button>
+          <button class="btn btn-rust" onclick="openModal('cashout')">− Cash out</button>
+        </div>
+
+        <div class="ledger-heading">
+          <div class="t">Transaction ledger</div>
+          <div class="c" id="dash-tx-count">0 entries</div>
+        </div>
+
+        <div class="tx-list" id="tx-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Deposit</div>
+    <div class="modal-sub" id="modal-sub">Add money into your cashbook.</div>
+
+    <div class="field">
+      <label>Amount</label>
+      <input type="number" id="modal-amount" placeholder="0.00" inputmode="decimal" min="0" step="0.01">
+    </div>
+    <div class="field">
+      <label>Note (optional)</label>
+      <input type="text" id="modal-note" placeholder="e.g. Shop sales, rent, supplies">
+    </div>
+
+    <button class="btn btn-primary" id="modal-submit" style="margin-top:6px;">Confirm</button>
+  </div>
+</div>
+
+<div class="stamp-fx" id="stamp-fx"></div>
+
+<script>
+const DB_USERS = 'ledgerbook_users';
+const DB_SESSION = 'ledgerbook_session';
+const DB_TX_PREFIX = 'ledgerbook_tx_';
+
+function getUsers(){
+  return JSON.parse(localStorage.getItem(DB_USERS) || '{}');
+}
+function saveUsers(users){
+  localStorage.setItem(DB_USERS, JSON.stringify(users));
+}
+function getTx(username){
+  return JSON.parse(localStorage.getItem(DB_TX_PREFIX + username) || '[]');
+}
+function saveTx(username, tx){
+  localStorage.setItem(DB_TX_PREFIX + username, JSON.stringify(tx));
+}
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+const QUESTION_LABELS = {
+  pet: "What was your first pet's name?",
+  city: "What city were you born in?",
+  school: "What was your first school?",
+  mother: "What is your mother's first name?"
+};
+
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  ['login-error','register-error','forgot-error','forgot-success'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){ el.style.display='none'; el.textContent=''; }
+  });
+  if(screen === 'forgot'){
+    document.getElementById('forgot-step1').style.display = 'block';
+    document.getElementById('forgot-step2').style.display = 'none';
+    document.getElementById('forgot-username').value = '';
+  }
+}
+
+function showError(id, msg){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function showSuccess(id, msg){
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+document.getElementById('btn-register').addEventListener('click', async () => {
+  const username = document.getElementById('reg-username').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const question = document.getElementById('reg-question').value;
+  const answer = document.getElementById('reg-answer').value.trim();
+
+  if(!username || !password || !answer){
+    showError('register-error', 'Please fill in every field.');
+    return;
+  }
+  if(password.length < 4){
+    showError('register-error', 'Password must be at least 4 characters.');
+    return;
+  }
+  const users = getUsers();
+  if(users[username]){
+    showError('register-error', 'That username is already taken.');
+    return;
+  }
+  users[username] = {
+    passwordHash: await sha256(password),
+    question: question,
+    answerHash: await sha256(answer.toLowerCase()),
+    createdAt: new Date().toISOString()
+  };
+  saveUsers(users);
+  saveTx(username, []);
+  sessionLogin(username);
+});
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if(!username || !password){
+    showError('login-error', 'Enter your username and password.');
+    return;
+  }
+  const users = getUsers();
+  const user = users[username];
+  if(!user){
+    showError('login-error', 'No account found with that username.');
+    return;
+  }
+  const hash = await sha256(password);
+  if(hash !== user.passwordHash){
+    showError('login-error', 'Incorrect password. Try again.');
+    return;
+  }
+  sessionLogin(username);
+});
+
+function sessionLogin(username){
+  localStorage.setItem(DB_SESSION, username);
+  enterDashboard(username);
+}
+function logout(){
+  localStorage.removeItem(DB_SESSION);
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  go('login');
+}
+
+let forgotUsername = null;
+
+document.getElementById('btn-find-account').addEventListener('click', () => {
+  const username = document.getElementById('forgot-username').value.trim();
+  const users = getUsers();
+  if(!username || !users[username]){
+    showError('forgot-error', 'No account found with that username.');
+    return;
+  }
+  forgotUsername = username;
+  document.getElementById('forgot-error').style.display = 'none';
+  document.getElementById('forgot-question-label').textContent = QUESTION_LABELS[users[username].question];
+  document.getElementById('forgot-step1').style.display = 'none';
+  document.getElementById('forgot-step2').style.display = 'block';
+});
+
+document.getElementById('btn-reset-password').addEventListener('click', async () => {
+  const answer = document.getElementById('forgot-answer').value.trim();
+  const newpass = document.getElementById('forgot-newpass').value;
+  const users = getUsers();
+  const user = users[forgotUsername];
+
+  if(!answer || !newpass){
+    showError('forgot-error', 'Please fill in every field.');
+    return;
+  }
+  if(newpass.length < 4){
+    showError('forgot-error', 'Password must be at least 4 characters.');
+    return;
+  }
+  const answerHash = await sha256(answer.toLowerCase());
+  if(answerHash !== user.answerHash){
+    showError('forgot-error', 'That answer doesn\'t match our records.');
+    return;
+  }
+  user.passwordHash = await sha256(newpass);
+  saveUsers(users);
+  showSuccess('forgot-success', 'Password updated! You can sign in now.');
+  document.getElementById('forgot-step2').style.display = 'none';
+  setTimeout(() => go('login'), 1400);
+});
+
+let currentUser = null;
+
+function enterDashboard(username){
+  currentUser = username;
+  document.getElementById('dash-username').textContent = username;
+  go('dash');
+  renderLedger();
+}
+
+function fmt(n){
+  return n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function renderLedger(){
+  const tx = getTx(currentUser).slice().sort((a,b) => b.ts - a.ts);
+  const totalDeposit = tx.filter(t=>t.type==='deposit').reduce((s,t)=>s+t.amount,0);
+  const totalCashout = tx.filter(t=>t.type==='cashout').reduce((s,t)=>s+t.amount,0);
+  const balance = totalDeposit - totalCashout;
+
+  document.getElementById('dash-balance').textContent = fmt(balance);
+  document.getElementById('dash-total-deposit').textContent = fmt(totalDeposit);
+  document.getElementById('dash-total-cashout').textContent = fmt(totalCashout);
+  document.getElementById('dash-tx-count').textContent = tx.length + (tx.length===1?' entry':' entries');
+
+  const list = document.getElementById('tx-list');
+  if(tx.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="glyph">◈</div><div class="msg">No entries yet. Log your first deposit or cash-out above.</div></div>`;
+    return;
+  }
+  list.innerHTML = tx.map(t => {
+    const d = new Date(t.ts);
+    const dateStr = d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'}) + ' · ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const sign = t.type === 'deposit' ? '+' : '−';
+    return `
+      <div class="tx-row">
+        <div class="tx-stamp ${t.type}">${t.type==='deposit'?'↓':'↑'}</div>
+        <div class="tx-info">
+          <div class="note">${escapeHtml(t.note || (t.type==='deposit' ? 'Deposit' : 'Cash out'))}</div>
+          <div class="date">${dateStr}</div>
+        </div>
+        <div class="tx-amt ${t.type}">${sign}৳${fmt(t.amount)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+let modalType = 'deposit';
+function openModal(type){
+  modalType = type;
+  document.getElementById('modal-title').textContent = type === 'deposit' ? 'Deposit' : 'Cash out';
+  document.getElementById('modal-title').className = 'modal-title ' + type;
+  document.getElementById('modal-sub').textContent = type === 'deposit'
+    ? 'Add money into your cashbook.'
+    : 'Record money taken out of your cashbook.';
+  document.getElementById('modal-submit').className = 'btn ' + (type === 'deposit' ? 'btn-brass' : 'btn-rust');
+  document.getElementById('modal-amount').value = '';
+  document.getElementById('modal-note').value = '';
+  document.getElementById('modal-backdrop').classList.add('active');
+  setTimeout(()=>document.getElementById('modal-amount').focus(), 200);
+}
+function closeModal(){
+  document.getElementById('modal-backdrop').classList.remove('active');
+}
+document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+  if(e.target.id === 'modal-backdrop') closeModal();
+});
+
+document.getElementById('modal-submit').addEventListener('click', () => {
+  const amount = parseFloat(document.getElementById('modal-amount').value);
+  const note = document.getElementById('modal-note').value.trim();
+  if(!amount || amount <= 0){
+    document.getElementById('modal-amount').style.borderColor = 'var(--pink)';
+    return;
+  }
+  const tx = getTx(currentUser);
+  tx.push({ id: Date.now(), type: modalType, amount, note, ts: Date.now() });
+  saveTx(currentUser, tx);
+  closeModal();
+  renderLedger();
+  fireStamp(modalType);
+});
+
+function fireStamp(type){
+  const el = document.getElementById('stamp-fx');
+  el.textContent = type === 'deposit' ? '+ DEPOSITED' : '− CASHED OUT';
+  el.className = 'stamp-fx ' + type;
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 800);
+}
+
+(function boot(){
+  const session = localStorage.getItem(DB_SESSION);
+  if(session){
+    const users = getUsers();
+    if(users[session]){
+      enterDashboard(session);
+      return;
+    }
+  }
+  go('login');
+})();
+</script>
+</body>
+</html>
